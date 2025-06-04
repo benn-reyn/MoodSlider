@@ -5,7 +5,7 @@ from spotipy.oauth2 import SpotifyOAuth
 import os
 from spotipy.exceptions import SpotifyException
 
-#credentials
+#Spotify OAuth credentials
 CLIENT_ID = "3b7394e4910743c0852fa0811ba9679f"
 CLIENT_SECRET = "6b8ff28643bf4ca59b6a3b33bcf40160"
 REDIRECT_URI = "http://127.0.0.1:8000/callback"
@@ -27,7 +27,7 @@ token_info = {}
 @app.get("/", response_class=HTMLResponse)
 def login():
     auth_url = sp_oauth.get_authorize_url()
-    html = f"<h1>Login with Spotify</h1><a href='{auth_url}'>Click here to login</a>"
+    html = f"<h1>Login with Spotify</h1><a href='{auth_url}'>Click here to log in</a>"
     return HTMLResponse(content=html)
 
 @app.get("/callback")
@@ -50,7 +50,7 @@ def mood_tracks(mood: int = Query(50, ge=0, le=100)):
     seed_artists = [artist["id"] for artist in top_artists["items"]]
     mood_val = mood / 100.0
 
-    try:
+   try:␊
         recs = sp.recommendations(
             seed_artists=seed_artists[:2],
             target_energy=mood_val,
@@ -59,7 +59,7 @@ def mood_tracks(mood: int = Query(50, ge=0, le=100)):
         )
         if not recs["tracks"]:
             raise Exception("Empty recommendations from artist seeds")
-    except:
+    except SpotifyException:
         recs = sp.recommendations(
             seed_genres=["pop", "rock"],
             target_energy=mood_val,
