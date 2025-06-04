@@ -74,12 +74,7 @@ def mood_tracks(mood: int = Query(50, ge=0, le=100)):
     
     return HTMLResponse(content=html)
 
-@app.get("/callback")
-def callback(request: Request):
-    code = request.query_params.get("code")
-    global token_info
-    token_info = sp_oauth.get_access_token(code)
-    return RedirectResponse(url="/mood-tracks?mood=50")
+
 
 @app.get("/test-recs")
 def test_recommendations():
