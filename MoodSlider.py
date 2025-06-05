@@ -5,9 +5,6 @@ from spotipy.oauth2 import SpotifyOAuth
 import os
 from spotipy.exceptions import SpotifyException
 
-#Spotify OAuth credentials
-CLIENT_ID = "3b7394e4910743c0852fa0811ba9679f"
-CLIENT_SECRET = "6b8ff28643bf4ca59b6a3b33bcf40160"
 REDIRECT_URI = "http://127.0.0.1:8000/callback"
 SCOPE = "user-top-read"
 
