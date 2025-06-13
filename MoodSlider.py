@@ -1,10 +1,115 @@
-from fastapi import FastAPI, Request, Query
-from fastapi.responses import HTMLResponse, RedirectResponse
-import spotipy
-from spotipy.oauth2 import SpotifyOAuth
+from dotenv import load_dotenv
 import os
+import base64
+import requests
+import json
+from spotipy import Spotify
+from spotipy.oauth2 import SpotifyClientCredentials
 from spotipy.exceptions import SpotifyException
 
+load_dotenv()
+
+client_id = os.getenv("CLIENT_ID")
+client_secret = os.getenv("CLIENT_SECRET")
+
+auth_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
+sp = Spotify(auth_manager=auth_manager)
+
+# Mood mapping based on general genre mood associations
+GENRE_TO_MOOD = {
+    "pop": "vibrant",
+    "dance": "vibrant",
+    "edm": "vibrant",
+    "house": "vibrant",
+    "hip hop": "ambitious",
+    "rap": "ambitious",
+    "rock": "frustrated",
+    "punk": "frustrated",
+    "metal": "frustrated",
+    "emo": "upset",
+    "acoustic": "upset",
+    "sad": "upset",
+    "blues": "upset",
+    "soul": "upset"
+}
+
+def get_token():
+    auth = f"{client_id}:{client_secret}".encode()
+    b64 = base64.b64encode(auth).decode()
+    resp = requests.post(
+        "https://accounts.spotify.com/api/token",
+        headers={"Authorization": f"Basic {b64}"},
+        data={"grant_type": "client_credentials"}
+    )
+    resp.raise_for_status()
+    return resp.json()["access_token"]
+
+token = get_token()
+
+def search_for_artist(artist_name):
+    result = sp.search(q=f"artist:{artist_name}", type="artist", limit=1)
+    items = result["artists"]["items"]
+    return items[0] if items else None
+
+def get_songs_by_artist(artist_name: str, limit: int = 20, market: str = "US", use_top_tracks: bool = True):
+    artist = search_for_artist(artist_name)
+    if not artist:
+        return []
+    artist_id = artist["id"]
+
+    if use_top_tracks:
+        resp = sp.artist_top_tracks(artist_id, country=market)
+        return resp["tracks"][:limit], artist["genres"]
+    else:
+        query = f"artist:{artist_name}"
+        resp = sp.search(q=query, type="track", limit=limit, market=market)
+        return resp["tracks"]["items"], artist["genres"]
+
+def classify_genre_to_mood(genres):
+    genre_str = ", ".join(genres).lower()
+    for keyword, mood in GENRE_TO_MOOD.items():
+        if keyword in genre_str:
+            return mood
+    return "vibrant" 
+
+if __name__ == "__main__":
+    artist_name = "Linkin Park"
+    tracks, genres = get_songs_by_artist(artist_name, limit=5)
+    mood = classify_genre_to_mood(genres)
+
+    print(f"Top songs for {artist_name} classified under mood: {mood.upper()}")
+    print("Genres:", genres)
+    for track in tracks:
+        print("-", track["name"])
+
+
+
+
+
+
+
+
+
+    # Full search approach
+    #search_tracks = get_songs_by_artist("AC/DC", limit=5, use_top_tracks=False)
+    #for t in search_tracks:
+        #print(t["name"], "-", t["artists"])
+
+
+#--------------MOOD SLIDER-----------------
+
+#metrics: acousticness, analysis_url, danceability, duration_ms, energy, id, instrumentalness, key, liveness, loudness, mode, speechiness,
+#tempo, time_signature, track_href, type, uri, valence
+
+
+
+     
+
+#return access token-> access_token
+#user access token in requests to Web API -> access_token
+#return requested (unscoped data)->JSON obj
+
+'''
 REDIRECT_URI = "http://127.0.0.1:8000/callback"
 SCOPE = "user-top-read"
 
@@ -93,3 +198,4 @@ def test_recommendations():
         html += f"<li>{track['name']} by {track['artists'][0]['name']}</li>"
     html += "</ul>"
     return HTMLResponse(html)
+'''
